@@ -639,8 +639,12 @@ class MiniGridEnv(gym.Env):
         # Toggle/activate an object
         toggle = 5
 
+        # (Time travel)
+        # Rewind time 5 steps back
+        rewind_5 = 6
+
         # Done completing task
-        done = 6
+        done = 7
 
     def __init__(
         self,
@@ -726,6 +730,17 @@ class MiniGridEnv(gym.Env):
 
         # Step count since episode start
         self.step_count = 0
+
+        # (Time travel)
+        # Step count from agent's perspective
+        self.step_count_agent = 0
+
+        # (Time travel)
+        # State history
+        self.state_history = []
+        grid_copy = self.grid.copy()
+        state = (grid_copy, self.agent_pos, self.agent_dir, self.carrying)
+        self.state_history.append(state)
 
         # Return first observation
         obs = self.gen_obs()
@@ -1148,6 +1163,19 @@ class MiniGridEnv(gym.Env):
             if fwd_cell:
                 fwd_cell.toggle(self, fwd_pos)
 
+        # (Time travel)
+        # Rewind time 5 steps back
+        elif action == self.actions.rewind_5:
+            if len(self.state_history) >= 5:
+                for i in range(4):
+                    self.state_history.pop()
+                state_new = self.state_history.pop()
+                self.grid = state_new[0]
+                self.agent_pos = state_new[1]
+                self.agent_dir = state_new[2]
+                self.carrying = state_new[3]
+                self.step_count -= 5
+
         # Done action (not used by default)
         elif action == self.actions.done:
             pass
@@ -1157,6 +1185,13 @@ class MiniGridEnv(gym.Env):
 
         if self.step_count >= self.max_steps:
             done = True
+
+        # (Time travel)
+        # Update state history and current time step
+        self.step_count_agent += 1
+        grid_copy = self.grid.copy()
+        state = (grid_copy, self.agent_pos, self.agent_dir, self.carrying)
+        self.state_history.append(state)
 
         obs = self.gen_obs()
 

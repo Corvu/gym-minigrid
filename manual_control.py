@@ -67,6 +67,11 @@ def key_handler(event):
     if event.key == 'pagedown':
         step(env.actions.drop)
         return
+    
+    # (Time travel)
+    if event.key == '5':
+        step(env.actions.rewind_5)
+        return
 
     if event.key == 'enter':
         step(env.actions.done)
