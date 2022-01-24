@@ -759,11 +759,20 @@ class MiniGridEnv(gym.Env):
         self.step_count_agent = 0
 
         # (Time travel)
-        # State history
-        self.state_history = []
-        grid_copy = self.grid.copy()
-        state = (grid_copy, self.agent_pos, self.agent_dir, self.carrying)
-        self.state_history.append(state)
+        # Placeholder for state history
+        self.grid_hist = np.zeros(shape=(self.max_steps, self.width, self.height, 3), dtype='uint8')
+        self.agent_pos_hist = np.zeros(shape=(self.max_steps, 2), dtype='uint8')
+        self.agent_dir_hist = np.zeros(shape=(self.max_steps), dtype='uint8')
+        self.agent_carrying_hist = [None] * self.max_steps
+        # Write initial state
+        grid_copy = self.grid.encode()
+        agent_pos_copy = self.agent_pos.copy()
+        agent_dir_copy = self.agent_dir
+        agent_carrying_copy = self.carrying
+        self.grid_hist[0] = grid_copy
+        self.agent_pos_hist[0] = agent_pos_copy
+        self.agent_dir_hist[0] = agent_dir_copy
+        self.agent_carrying_hist[0] = agent_carrying_copy
 
         # Return first observation
         obs = self.gen_obs()
@@ -1189,36 +1198,33 @@ class MiniGridEnv(gym.Env):
         # (Time travel)
         # Rewind time 5 steps back
         elif action == self.actions.rewind_5:
-            if len(self.state_history) >= 5:
-                for i in range(5-1):
-                    self.state_history.pop()
-                state_new = self.state_history.pop()
-                self.grid = state_new[0]
-                self.agent_pos = state_new[1]
-                self.agent_dir = state_new[2]
-                self.carrying = state_new[3]
+            if self.step_count >= 5:
+                s = self.step_count - 5
+                grid_encoded = self.grid_hist[s]
+                self.grid, mask = Grid.decode(grid_encoded)
+                self.agent_pos = self.agent_pos_hist[s]
+                self.agent_dir = self.agent_dir_hist[s]
+                self.carrying = self.agent_carrying_hist[s]
                 self.step_count -= 5
         # Rewind time 10 steps back
         elif action == self.actions.rewind_10:
-            if len(self.state_history) >= 10:
-                for i in range(10-1):
-                    self.state_history.pop()
-                state_new = self.state_history.pop()
-                self.grid = state_new[0]
-                self.agent_pos = state_new[1]
-                self.agent_dir = state_new[2]
-                self.carrying = state_new[3]
+            if self.step_count >= 10:
+                s = self.step_count - 10
+                grid_encoded = self.grid_hist[s]
+                self.grid, mask = Grid.decode(grid_encoded)
+                self.agent_pos = self.agent_pos_hist[s]
+                self.agent_dir = self.agent_dir_hist[s]
+                self.carrying = self.agent_carrying_hist[s]
                 self.step_count -= 10
         # Rewind time 25 steps back
         elif action == self.actions.rewind_25:
-            if len(self.state_history) >= 25:
-                for i in range(25-1):
-                    self.state_history.pop()
-                state_new = self.state_history.pop()
-                self.grid = state_new[0]
-                self.agent_pos = state_new[1]
-                self.agent_dir = state_new[2]
-                self.carrying = state_new[3]
+            if self.step_count >= 25:
+                s = self.step_count - 25
+                grid_encoded = self.grid_hist[s]
+                self.grid, mask = Grid.decode(grid_encoded)
+                self.agent_pos = self.agent_pos_hist[s]
+                self.agent_dir = self.agent_dir_hist[s]
+                self.carrying = self.agent_carrying_hist[s]
                 self.step_count -= 25
 
         # Done action (not used by default)
@@ -1234,9 +1240,15 @@ class MiniGridEnv(gym.Env):
         # (Time travel)
         # Update state history and current time step
         self.step_count_agent += 1
-        grid_copy = self.grid.copy()
-        state = (grid_copy, self.agent_pos, self.agent_dir, self.carrying)
-        self.state_history.append(state)
+        grid_copy = self.grid.encode()
+        agent_pos_copy = self.agent_pos.copy()
+        agent_dir_copy = self.agent_dir
+        agent_carrying_copy = self.carrying
+        s = self.step_count
+        self.grid_hist[s] = grid_copy
+        self.agent_pos_hist[s] = agent_pos_copy
+        self.agent_dir_hist[s] = agent_dir_copy
+        self.agent_carrying_hist[s] = agent_carrying_copy
 
         obs = self.gen_obs()
 
