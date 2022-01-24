@@ -91,6 +91,12 @@ def key_handler(event):
     if event.key == '5':
         step(env.actions.rewind_5)
         return
+    if event.key == '6':
+        step(env.actions.rewind_10)
+        return
+    if event.key == '7':
+        step(env.actions.rewind_25)
+        return
 
     if event.key == 'enter':
         step(env.actions.done)

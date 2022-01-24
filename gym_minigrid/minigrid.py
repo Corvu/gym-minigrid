@@ -661,9 +661,13 @@ class MiniGridEnv(gym.Env):
         # (Time travel)
         # Rewind time 5 steps back
         rewind_5 = 6
+        # Rewind time 10 steps back
+        rewind_10 = 7
+        # Rewind time 25 steps back
+        rewind_25 = 8
 
         # Done completing task
-        done = 7
+        done = 9
 
     def __init__(
         self,
@@ -1186,7 +1190,7 @@ class MiniGridEnv(gym.Env):
         # Rewind time 5 steps back
         elif action == self.actions.rewind_5:
             if len(self.state_history) >= 5:
-                for i in range(4):
+                for i in range(5-1):
                     self.state_history.pop()
                 state_new = self.state_history.pop()
                 self.grid = state_new[0]
@@ -1194,6 +1198,28 @@ class MiniGridEnv(gym.Env):
                 self.agent_dir = state_new[2]
                 self.carrying = state_new[3]
                 self.step_count -= 5
+        # Rewind time 10 steps back
+        elif action == self.actions.rewind_10:
+            if len(self.state_history) >= 10:
+                for i in range(10-1):
+                    self.state_history.pop()
+                state_new = self.state_history.pop()
+                self.grid = state_new[0]
+                self.agent_pos = state_new[1]
+                self.agent_dir = state_new[2]
+                self.carrying = state_new[3]
+                self.step_count -= 10
+        # Rewind time 25 steps back
+        elif action == self.actions.rewind_25:
+            if len(self.state_history) >= 25:
+                for i in range(25-1):
+                    self.state_history.pop()
+                state_new = self.state_history.pop()
+                self.grid = state_new[0]
+                self.agent_pos = state_new[1]
+                self.agent_dir = state_new[2]
+                self.carrying = state_new[3]
+                self.step_count -= 25
 
         # Done action (not used by default)
         elif action == self.actions.done:
